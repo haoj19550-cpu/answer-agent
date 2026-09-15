@@ -17,7 +17,9 @@ export default defineConfig<'webpack5'>(async (merge) => {
       828: 1.81 / 2,
     },
     sourceRoot: 'src',
-    outputRoot: 'dist',
+    // 小程序产物固定 dist/（project.config.json 的 miniprogramRoot 指向它）；
+    // H5 独立目录，避免 dev:h5 清空 dist 导致开发者工具报「dist/app.json 不存在」
+    outputRoot: process.env.TARO_ENV === 'h5' ? 'dist-h5' : 'dist',
     plugins: [],
     defineConstants: {
       'process.env.TARO_APP_API_BASE': JSON.stringify(process.env.TARO_APP_API_BASE || ''),
