@@ -24,6 +24,7 @@ dist/
 .env
 .env.*
 !.env.example
+!client/.env.development
 
 # 运行日志与 Taro 构建缓存
 *.log
