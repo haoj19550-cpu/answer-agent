@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 闯关学习助手 · 原型 ② — 第二阶段扩展功能</title>
+<style>
+/* ============================================================
+   设计 Token · 游戏闯关卡通风（Duolingo 式）— 与文件一一致
+   ============================================================ */
+:root{
+  --green:#58CC02;      --green-dark:#46A302;   --green-tint:#DDF4D0;  --green-soft:#EAFBDC;
+  --purple:#CE82FF;     --purple-dark:#A568CC;  --purple-tint:#F1E4FF;
+  --blue:#1CB0F6;       --blue-dark:#1899D6;    --blue-tint:#DDF4FF;
+  --yellow:#FFC800;     --yellow-dark:#CC9A00;  --yellow-tint:#FFF3C4;
+  --red:#FF4B4B;        --red-dark:#EA2B2B;     --red-tint:#FFE0E0;
+  --orange:#FF9600;     --orange-dark:#E08600;  --orange-tint:#FFE8CC;
+  --ink:#3C3C3C;        --gray:#777777;         --faint:#AFAFAF;
+  --line:#E5E5E5;       --panel:#F7F7F7;        --paper:#FFFFFF;
+  --r-card:18px; --r-btn:14px; --r-chip:999px;
+  --font:"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{background:#EEF1F4}
+body{font-family:var(--font);color:var(--ink);background:#EEF1F4;line-height:1.55}
+
+.gal-head{max-width:1240px;margin:0 auto;padding:40px 28px 8px;display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px}
+.gal-title{font-size:30px;font-weight:800;letter-spacing:.5px}
+.gal-title em{font-style:normal;color:var(--purple-dark)}
+.gal-sub{color:var(--gray);font-size:14px;margin-top:6px;max-width:560px}
+.gal-nav{display:flex;gap:10px}
+.gal-nav a{display:inline-block;padding:10px 18px;border-radius:var(--r-chip);font-size:13px;font-weight:800;text-decoration:none;border:2px solid var(--line);color:var(--gray);background:#fff;box-shadow:0 2px 0 var(--line)}
+.gal-nav a.on{background:var(--purple);border-color:var(--purple);color:#fff;box-shadow:0 2px 0 var(--purple-dark)}
+
+.spec{max-width:1240px;margin:20px auto 0;padding:0 28px}
+.spec-box{background:#fff;border:2px solid var(--line);border-radius:22px;padding:20px 26px;display:flex;flex-wrap:wrap;gap:14px 28px;align-items:center}
+.spec-box h2{font-size:15px;font-weight:800}
+.spec-box p{font-size:12.5px;color:var(--gray);font-weight:600;max-width:760px}
+
+.grid{max-width:1240px;margin:44px auto 60px;padding:0 28px;display:grid;grid-template-columns:repeat(3,auto);gap:56px 36px;justify-content:center}
+@media(max-width:1280px){.grid{grid-template-columns:repeat(2,auto)}}
+@media(max-width:860px){.grid{grid-template-columns:auto}}
+.cell{display:flex;flex-direction:column;align-items:center}
+.cap{font-size:15px;font-weight:800;margin-bottom:4px}
+.cap-sub{font-size:12px;color:var(--faint);font-weight:600;margin-bottom:14px}
+
+.dv{width:375px;height:812px;border-radius:50px;background:#fff;border:11px solid #20262B;overflow:hidden;box-shadow:0 30px 60px rgba(32,38,43,.22);flex:none}
+.scr{height:100%;display:flex;flex-direction:column;background:var(--paper);position:relative}
+.st{height:46px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:6px 26px 0;font-size:13px;font-weight:700}
+.st .st-ic{display:flex;gap:6px;align-items:center}
+.bd{flex:1;overflow:hidden;display:flex;flex-direction:column;padding:8px 18px 14px;position:relative}
+.tb{flex:none;height:66px;border-top:2px solid var(--line);display:flex;background:#fff}
+.tb a{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;text-decoration:none;color:var(--faint);font-size:11px;font-weight:700;cursor:pointer}
+.tb a.on{color:var(--green-dark)}
+
+.card{background:#fff;border:2px solid var(--line);border-radius:var(--r-card);padding:16px}
+.chip{display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:var(--r-chip);font-size:12px;font-weight:700;border:2px solid var(--line);color:var(--gray);background:#fff;cursor:pointer;transition:all .15s}
+.chip.on{border-color:var(--green);color:var(--green-dark);background:var(--green-soft)}
+.h-bar{height:14px;border-radius:var(--r-chip);background:var(--line);overflow:hidden}
+.h-bar>i{display:block;height:100%;width:0;border-radius:var(--r-chip);background:var(--green);transition:width 1s cubic-bezier(.22,1,.36,1)}
+.tag{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:var(--r-chip);font-size:11px;font-weight:800}
+.tag-green{background:var(--green-tint);color:var(--green-dark)}
+.tag-blue{background:var(--blue-tint);color:var(--blue-dark)}
+.tag-yellow{background:var(--yellow-tint);color:var(--yellow-dark)}
+.tag-red{background:var(--red-tint);color:var(--red-dark)}
+.tag-purple{background:var(--purple-tint);color:var(--purple-dark)}
+.sec-t{font-size:15px;font-weight:800;margin:16px 0 10px}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:13px 16px;border:none;border-radius:var(--r-btn);font-family:var(--font);font-size:15px;font-weight:800;letter-spacing:1.5px;cursor:pointer;transition:transform .08s ease,box-shadow .08s ease;user-select:none}
+.btn:active{transform:translateY(4px)}
+.btn-green{background:var(--green);color:#fff;box-shadow:0 4px 0 var(--green-dark)}
+.btn-green:active{box-shadow:0 0 0 var(--green-dark)}
+.btn-blue{background:var(--blue);color:#fff;box-shadow:0 4px 0 var(--blue-dark)}
+.btn-blue:active{box-shadow:0 0 0 var(--blue-dark)}
+.btn-purple{background:var(--purple);color:#fff;box-shadow:0 4px 0 var(--purple-dark)}
+.btn-purple:active{box-shadow:0 0 0 var(--purple-dark)}
+.btn-red{background:var(--red);color:#fff;box-shadow:0 4px 0 var(--red-dark)}
+.btn-red:active{box-shadow:0 0 0 var(--red-dark)}
+.btn-ghost{background:#fff;color:var(--blue-dark);border:2px solid var(--line);box-shadow:0 4px 0 var(--line)}
+.btn-ghost:active{box-shadow:0 0 0 var(--line)}
+.btn-sm{padding:9px 14px;font-size:13px;width:auto}
+
+.opt{display:flex;align-items:center;gap:12px;padding:13px 14px;border:2px solid var(--line);border-radius:16px;background:#fff;box-shadow:0 3px 0 var(--line);cursor:pointer;font-size:14px;font-weight:600;transition:all .15s;user-select:none}
+.opt+.opt{margin-top:10px}
+.opt-key{flex:none;width:28px;height:28px;border-radius:9px;border:2px solid var(--line);display:grid;place-items:center;font-size:12px;font-weight:800;color:var(--faint)}
+.opt.selected{border-color:var(--blue);background:var(--blue-tint);box-shadow:0 3px 0 var(--blue-dark)}
+.opt.selected .opt-key{border-color:var(--blue);color:var(--blue-dark);background:#fff}
+.opt.correct{border-color:var(--green);background:var(--green-tint);box-shadow:0 3px 0 var(--green-dark)}
+.opt.correct .opt-key{border-color:var(--green);color:var(--green-dark);background:#fff}
+.opt.wrong{border-color:var(--red);background:var(--red-tint);box-shadow:0 3px 0 var(--red-dark)}
+.opt.wrong .opt-key{border-color:var(--red);color:var(--red-dark);background:#fff}
+.opt.lock{pointer-events:none}
+.explain{max-height:0;overflow:hidden;transition:max-height .45s ease}
+.explain.show{max-height:420px}
+.ex-card{border:2px solid var(--line);border-radius:var(--r-card);padding:14px;background:#fff}
+.ex-card h4{font-size:13px;font-weight:800;display:flex;align-items:center;gap:6px;margin-bottom:6px}
+.ex-card p{font-size:13px;color:var(--gray);line-height:1.65}
+
+@keyframes flame{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}
+.flame-ic{animation:flame 1.6s ease-in-out infinite;transform-origin:bottom center}
+@keyframes bossPulse{0%,100%{box-shadow:0 6px 0 var(--purple-dark),0 0 0 0 rgba(206,130,255,.4)}50%{box-shadow:0 6px 0 var(--purple-dark),0 0 0 18px rgba(206,130,255,0)}}
+
+/* ---- 各屏专用 ---- */
+/* S1 错题追问 */
+.fu-ctx{border:2px solid var(--red);background:#FFF7F7;border-radius:var(--r-card);padding:14px;margin-bottom:14px}
+.fu-ctx h4{font-size:13px;font-weight:800;color:var(--red-dark);display:flex;align-items:center;gap:6px;margin-bottom:4px}
+.fu-ctx p{font-size:12.5px;color:var(--gray);line-height:1.6}
+.fu-ctx p b{color:var(--ink)}
+.stem-card{background:#fff;border:2px solid var(--line);border-radius:var(--r-card);padding:18px 16px;margin:4px 0 14px}
+.stem-card h3{font-size:16.5px;font-weight:800;line-height:1.55}
+
+/* S2 知识图谱 */
+.km-head{display:flex;align-items:center;gap:16px;margin-bottom:6px}
+.ring{width:96px;height:96px;border-radius:50%;background:conic-gradient(var(--blue) 0 72%,var(--line) 72% 100%);display:grid;place-items:center;flex:none}
+.ring>i{width:74px;height:74px;border-radius:50%;background:#fff;display:grid;place-items:center;font-style:normal}
+.ring b{font-size:24px;font-weight:800;color:var(--blue-dark)}
+.ring small{display:block;font-size:9px;color:var(--faint);font-weight:800;text-align:center}
+.tree{border:2px solid var(--line);border-radius:var(--r-card);background:#fff;padding:6px 14px}
+.tr{display:flex;align-items:center;gap:9px;padding:9px 0;border-bottom:2px dashed var(--line);cursor:pointer;border-radius:8px;transition:background .15s}
+.tr:last-child{border-bottom:none}
+.tr:hover{background:var(--panel)}
+.tr.hl{background:var(--blue-tint);outline:2px solid var(--blue)}
+.tr .tw{flex:none;width:14px;font-size:10px;color:var(--faint);font-weight:800}
+.tr b{font-size:13.5px;flex:none;width:86px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tr .h-bar{flex:1;height:10px}
+.tr span{flex:none;width:40px;text-align:right;font-size:12.5px;font-weight:800}
+.lv-legend{display:flex;gap:12px;justify-content:center;margin-top:10px}
+.lv-legend span{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--gray);font-weight:700}
+.lv-dot{width:9px;height:9px;border-radius:50%}
+
+/* S3 间隔复习 */
+.tl{position:relative;padding-left:26px}
+.tl::before{content:"";position:absolute;left:9px;top:14px;bottom:14px;width:3px;border-radius:3px;background:var(--line)}
+.tl-item{position:relative;padding:0 0 14px}
+.tl-dot{position:absolute;left:-26px;top:2px;width:21px;height:21px;border-radius:50%;border:3px solid var(--line);background:#fff;display:grid;place-items:center}
+.tl-item.done .tl-dot{border-color:var(--green);background:var(--green)}
+.tl-item.now .tl-dot{border-color:var(--blue);background:var(--blue);animation:bossPulse 2s infinite}
+.tl-card{border:2px solid var(--line);border-radius:16px;padding:12px 14px;background:#fff}
+.tl-item.done .tl-card{background:var(--green-soft);border-color:var(--green)}
+.tl-item.now .tl-card{border-color:var(--blue);background:var(--blue-tint)}
+.tl-item.lock .tl-card{opacity:.6}
+.tl-card b{font-size:14px;display:flex;align-items:center;gap:8px}
+.tl-card p{font-size:12px;color:var(--gray);font-weight:600;margin-top:3px}
+
+/* S4 Boss 挑战 */
+.boss-hero{background:linear-gradient(135deg,#7E57C2,#CE82FF);border-radius:22px;padding:22px 16px;text-align:center;color:#fff;box-shadow:0 6px 0 #6D4BA8;margin-bottom:14px;animation:bossPulse 2.4s infinite}
+.boss-badge{display:inline-grid;place-items:center;background:#fff;color:var(--purple-dark);font-size:12px;font-weight:800;letter-spacing:2px;border-radius:var(--r-chip);padding:5px 14px;margin-bottom:8px}
+.boss-hero h2{font-size:22px;font-weight:800}
+.boss-hero p{font-size:12px;opacity:.92;margin-top:4px}
+
+/* S5 任务卡 */
+.task{display:flex;align-items:center;gap:12px;padding:12px 14px;border:2px solid var(--line);border-radius:16px;background:#fff;cursor:pointer;transition:all .15s;user-select:none}
+.task+.task{margin-top:10px}
+.task .ck{flex:none;width:26px;height:26px;border-radius:9px;border:2.5px solid var(--faint);display:grid;place-items:center;color:#fff;transition:all .15s}
+.task b{flex:1;font-size:14px}
+.task small{font-size:11px;color:var(--faint);font-weight:700}
+.task.done{border-color:var(--green);background:var(--green-soft)}
+.task.done .ck{background:var(--green);border-color:var(--green)}
+.task.done b{color:var(--green-dark);text-decoration:line-through;text-decoration-thickness:2px}
+
+/* S6 学习模式 */
+.mode{display:flex;align-items:center;gap:12px;padding:13px 14px;border:2px solid var(--line);border-radius:16px;background:#fff;box-shadow:0 3px 0 var(--line);cursor:pointer;transition:all .15s;user-select:none}
+.mode+.mode{margin-top:10px}
+.mode .m-ic{flex:none;width:40px;height:40px;border-radius:13px;display:grid;place-items:center;font-size:19px}
+.mode b{flex:1;font-size:14px;display:block}
+.mode small{display:block;font-size:11px;color:var(--faint);font-weight:600}
+.mode.on{border-color:var(--green);background:var(--green-soft);box-shadow:0 3px 0 var(--green-dark)}
+.mode.on b{color:var(--green-dark)}
+
+/* S7 AI 面试官 */
+.chat{flex:1;display:flex;flex-direction:column;gap:10px;overflow:hidden;padding:4px 0}
+.msg{max-width:82%;padding:11px 14px;border-radius:16px;font-size:13px;line-height:1.6;font-weight:600}
+.msg.ai{align-self:flex-start;background:var(--panel);border:2px solid var(--line);border-bottom-left-radius:6px}
+.msg.me{align-self:flex-end;background:var(--blue);color:#fff;border-bottom-right-radius:6px;box-shadow:0 3px 0 var(--blue-dark)}
+.msg .who{display:block;font-size:10px;font-weight:800;color:var(--faint);margin-bottom:3px}
+.iv-bar{display:flex;align-items:center;gap:8px;padding:9px 0}
+.iv-bar b{flex:none;width:66px;font-size:12px}
+.iv-bar .h-bar{flex:1;height:10px}
+.iv-bar span{flex:none;width:38px;text-align:right;font-size:12.5px;font-weight:800}
+.input-pill{flex:none;display:flex;align-items:center;gap:10px;border:2px solid var(--line);border-radius:var(--r-chip);padding:10px 16px;background:#fff;margin-top:8px}
+.input-pill span{flex:1;color:var(--faint);font-size:13px;font-weight:600}
+.mic{flex:none;width:34px;height:34px;border-radius:50%;background:var(--green);display:grid;place-items:center;box-shadow:0 3px 0 var(--green-dark)}
+
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+}
+</style>
+</head>
+<body>
+
+<header class="gal-head">
+  <div>
+    <h1 class="gal-title">AI 闯关学习助手 <em>·</em> 网页原型 ②</h1>
+    <p class="gal-sub">第二阶段扩展功能：错题自动追问、知识图谱、间隔复习、Boss 挑战、任务卡、AI 学习模式、AI 面试官——产品差异化「Learning Loop」的视觉呈现。</p>
+  </div>
+  <nav class="gal-nav">
+    <a href="mvp-core.html">① MVP 核心闭环</a>
+    <a class="on" href="phase2-features.html">② 第二阶段扩展</a>
+  </nav>
+</header>
+
+<section class="spec">
+  <div class="spec-box">
+    <h2>与文件一共享设计规范</h2>
+    <p>主绿 #58CC02 · Boss 紫 #CE82FF · 学习蓝 #1CB0F6 · 能量黄 #FFC800 · 纠错红 #FF4B4B；卡片圆角 18px / 按钮 14px / 全圆角进度条；Chunky 厚底阴影按钮按压压扁；掌握度色阶：绿 ≥ 80% · 黄 60–79% · 红 &lt; 60%。</p>
+  </div>
+</section>
+
+<main class="grid">
+
+<!-- ========== 屏 1 · 错题自动追问 ========== -->
+<div class="cell">
+  <div class="cap">01 · 错题自动追问</div>
+  <div class="cap-sub">让错误成为新的学习机会</div>
+  <div class="dv"><div class="scr">
+    <div class="st"><span>9:41</span><span class="st-ic">
+      <svg width="17" height="11" viewBox="0 0 17 11" fill="#3C3C3C"><rect x="0" y="7" width="3" height="4" rx="1"/><rect x="4.5" y="5" width="3" height="6" rx="1"/><rect x="9" y="2.5" width="3" height="8.5" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1"/></svg>
+      <svg width="25" height="12" viewBox="0 0 25 12" fill="none"><rect x="0.5" y="0.5" width="21" height="11" rx="3.5" stroke="#3C3C3C"/><rect x="2.5" y="2.5" width="15" height="7" rx="2" fill="#3C3C3C"/><path d="M23.5 4v4a2 2 0 0 0 0-4z" fill="#3C3C3C"/></svg>
+    </span></div>
+    <div class="bd" data-quiz>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin:4px 0 12px">
+        <h2 style="font-size:20px;font-weight:800">AI 错题追问</h2>
+        <span class="tag tag-purple">追问 1 / 1</span>
+      </div>
+      <div class="fu-ctx">
+        <h4><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#EA2B2B" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5"/><circle cx="12" cy="16.5" r=".5" fill="#EA2B2B"/></svg>检测到概念混淆</h4>
+        <p>你刚才把 <b>「缓存击穿」</b>和 <b>「缓存穿透」</b>混淆了。换一个问题，确认你是否真正分清：</p>
+      </div>
+      <div class="stem-card">
+        <h3>如果数据库中本身不存在这个数据，但大量请求不断访问它，这属于什么问题？</h3>
+      </div>
+      <div data-options>
+        <div class="opt" data-opt><span class="opt-key">A</span>缓存击穿</div>
+        <div class="opt" data-opt data-correct="1"><span class="opt-key">B</span>缓存穿透</div>
+        <div class="opt" data-opt><span class="opt-key">C</span>缓存雪崩</div>
+      </div>
+      <div class="explain" data-explain>
+        <div class="ex-card" style="margin-top:14px;border-color:var(--green);background:var(--green-soft)">
+          <h4 style="color:var(--green-dark)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#46A302" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 12.5 10 18 19.5 6.5"/></svg>辨析成功！</h4>
+          <p>第一判断口诀：<b style="color:var(--ink)">数据存不存在</b>——不存在是穿透，存在但热点失效是击穿。本弱点已标记为「已纠正」。</p>
+        </div>
+      </div>
+      <div style="flex:1"></div>
+      <button class="btn btn-green" data-submit style="margin-bottom:6px">提交答案</button>
+    </div>
+  </div></div>
+</div>
+
+<!-- ========== 屏 2 · 知识图谱 ========== -->
+<div class="cell">
+  <div class="cap">02 · 知识图谱</div>
+  <div class="cap-sub">树形掌握度 · 点击行高亮</div>
+  <div class="dv"><div class="scr">
+    <div class="st"><span>9:41</span><span class="st-ic">
+      <svg width="17" height="11" viewBox="0 0 17 11" fill="#3C3C3C"><rect x="0" y="7" width="3" height="4" rx="1"/><rect x="4.5" y="5" width="3" height="6" rx="1"/><rect x="9" y="2.5" width="3" height="8.5" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1"/></svg>
+      <svg width="25" height="12" viewBox="0 0 25 12" fill="none"><rect x="0.5" y="0.5" width="21" height="11" rx="3.5" stroke="#3C3C3C"/><rect x="2.5" y="2.5" width="15" height="7" rx="2" fill="#3C3C3C"/><path d="M23.5 4v4a2 2 0 0 0 0-4z" fill="#3C3C3C"/></svg>
+    </span></div>
+    <div class="bd">
+      <h2 style="font-size:20px;font-weight:800;margin:4px 0 12px">知识掌握图</h2>
+      <div class="km-head">
+        <div class="ring"><i><span><b>72%</b><small>Redis 总掌握</small></span></i></div>
+        <div style="flex:1">
+          <b style="font-size:16px">Redis 缓存机制</b>
+          <p style="font-size:12px;color:var(--gray);font-weight:600;margin-top:4px;line-height:1.6">「缓存」分支是你的短板，其中<b style="color:var(--red-dark)">击穿 43%</b> 最需要复习。</p>
+        </div>
+      </div>
+      <div class="sec-t">知识点树</div>
+      <div class="tree" data-tree>
+        <div class="tr"><span class="tw">├─</span><b>数据类型</b><div class="h-bar"><i data-anim style="width:92%"></i></div><span style="color:var(--green-dark)">92%</span></div>
+        <div class="tr"><span class="tw">├─</span><b>持久化</b><div class="h-bar"><i data-anim style="width:83%"></i></div><span style="color:var(--green-dark)">83%</span></div>
+        <div class="tr"><span class="tw">├─</span><b>集群</b><div class="h-bar"><i data-anim style="width:71%;background:var(--yellow)"></i></div><span style="color:var(--yellow-dark)">71%</span></div>
+        <div class="tr hl"><span class="tw">└─</span><b>缓存</b><div class="h-bar"><i data-anim style="width:58%;background:var(--yellow)"></i></div><span style="color:var(--yellow-dark)">58%</span></div>
+        <div class="tr" style="padding-left:26px"><span class="tw">├─</span><b>穿透</b><div class="h-bar"><i data-anim style="width:48%;background:var(--red)"></i></div><span style="color:var(--red-dark)">48%</span></div>
+        <div class="tr" style="padding-left:26px"><span class="tw">├─</span><b>击穿</b><div class="h-bar"><i data-anim style="width:43%;background:var(--red)"></i></div><span style="color:var(--red-dark)">43%</span></div>
+        <div class="tr" style="padding-left:26px"><span class="tw">└─</span><b>雪崩</b><div class="h-bar"><i data-anim style="width:68%;background:var(--yellow)"></i></div><span style="color:var(--yellow-dark)">68%</span></div>
+      </div>
+      <div class="lv-legend">
+        <span><i class="lv-dot" style="background:var(--green)"></i>掌握 ≥80%</span>
+        <span><i class="lv-dot" style="background:var(--yellow)"></i>一般 60–79%</span>
+        <span><i class="lv-dot" style="background:var(--red)"></i>薄弱 &lt;60%</span>
+      </div>
+      <div style="flex:1"></div>
+      <button class="btn btn-red" style="margin-bottom:6px">针对薄弱点出题</button>
+    </div>
+  </div></div>
+</div>
+
+<!-- ========== 屏 3 · 间隔复习 ========== -->
+<div class="cell">
+  <div class="cap">03 · 间隔复习计划</div>
+  <div class="cap-sub">基于遗忘曲线的时间轴</div>
+  <div class="dv"><div class="scr">
+    <div class="st"><span>9:41</span><span class="st-ic">
+      <svg width="17" height="11" viewBox="0 0 17 11" fill="#3C3C3C"><rect x="0" y="7" width="3" height="4" rx="1"/><rect x="4.5" y="5" width="3" height="6" rx="1"/><rect x="9" y="2.5" width="3" height="8.5" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1"/></svg>
+      <svg width="25" height="12" viewBox="0 0 25 12" fill="none"><rect x="0.5" y="0.5" width="21" height="11" rx="3.5" stroke="#3C3C3C"/><rect x="2.5" y="2.5" width="15" height="7" rx="2" fill="#3C3C3C"/><path d="M23.5 4v4a2 2 0 0 0 0-4z" fill="#3C3C3C"/></svg>
+    </span></div>
+    <div class="bd">
+      <h2 style="font-size:20px;font-weight:800;margin:4px 0 4px">复习计划</h2>
+      <p style="font-size:12px;color:var(--gray);font-weight:600;margin-bottom:14px">「Redis 缓存机制」· 按遗忘曲线自动安排</p>
+      <div class="tl">
+        <div class="tl-item done">
+          <span class="tl-dot"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 12.5 10 18 19.5 6.5"/></svg></span>
+          <div class="tl-card"><b>今天 · 完成学习 <span class="tag tag-green">已完成</span></b><p>首次闯关 5 题 · 正确率 80%</p></div>
+        </div>
+        <div class="tl-item now">
+          <span class="tl-dot"></span>
+          <div class="tl-card">
+            <b>明天 · 复习 5 题 <span class="tag tag-blue">待进行</span></b>
+            <p>重点：缓存击穿、缓存穿透辨析</p>
+            <button class="btn btn-blue btn-sm" style="margin-top:10px">开始复习</button>
+          </div>
+        </div>
+        <div class="tl-item lock">
+          <span class="tl-dot"></span>
+          <div class="tl-card"><b>3 天后 · 再次复习</b><p>动态难度提升：概念题 → 对比题</p></div>
+        </div>
+        <div class="tl-item lock">
+          <span class="tl-dot"></span>
+          <div class="tl-card"><b>7 天后 · 再次挑战</b><p>全部掌握可解锁「长期记忆」徽章</p></div>
+        </div>
+      </div>
+      <div class="card" style="background:var(--yellow-tint);border-color:var(--yellow);margin-top:4px">
+        <p style="font-size:12px;color:#8a6d00;font-weight:600;line-height:1.6">科学依据：遗忘在学习后 24 小时内最快，第 1 / 3 / 7 天复习可将长期记忆保留率提升至 90%+。</p>
+      </div>
+    </div>
+    <div class="tb">
+      <a><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 3 3 10.5V21h6v-6h6v6h6V10.5L12 3z"/></svg>首页</a>
+      <a class="on"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="9" opacity=".18"/><path d="M12 3a9 9 0 1 0 9 9h-2.4A6.6 6.6 0 1 1 12 5.4V3zm1 4v5.6l4 2.4-1.2 2-5.2-3.1V7H13z"/></svg>学习记录</a>
+      <a><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 5-5.5 8-5.5s6.5 1.5 8 5.5"/></svg>我的</a>
+    </div>
+  </div></div>
+</div>
+
+<!-- ========== 屏 4 · Boss 挑战 ========== -->
+<div class="cell">
+  <div class="cap">04 · Boss 挑战</div>
+  <div class="cap-sub">综合应用能力的终极验证</div>
+  <div class="dv"><div class="scr">
+    <div class="st"><span>9:41</span><span class="st-ic">
+      <svg width="17" height="11" viewBox="0 0 17 11" fill="#3C3C3C"><rect x="0" y="7" width="3" height="4" rx="1"/><rect x="4.5" y="5" width="3" height="6" rx="1"/><rect x="9" y="2.5" width="3" height="8.5" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1"/></svg>
+      <svg width="25" height="12" viewBox="0 0 25 12" fill="none"><rect x="0.5" y="0.5" width="21" height="11" rx="3.5" stroke="#3C3C3C"/><rect x="2.5" y="2.5" width="15" height="7" rx="2" fill="#3C3C3C"/><path d="M23.5 4v4a2 2 0 0 0 0-4z" fill="#3C3C3C"/></svg>
+    </span></div>
+    <div class="bd" data-quiz>
+      <div class="boss-hero" style="margin-top:4px">
+        <span class="boss-badge">BOSS</span>
+        <h2>最终 Boss 挑战</h2>
+        <p>通关基础题后解锁 · 答对 +50 分</p>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:10px">
+        <span class="tag tag-purple">场景题</span>
+        <span class="tag tag-red">难度 ★★★★★</span>
+      </div>
+      <div class="stem-card">
+        <h3>一个高并发秒杀系统出现缓存击穿，你应该怎么解决？</h3>
+      </div>
+      <div data-options>
+        <div class="opt" data-opt><span class="opt-key">A</span>给所有缓存设置相同的过期时间，统一刷新</div>
+        <div class="opt" data-opt data-correct="1"><span class="opt-key">B</span>热点 key 用互斥锁重建 + 逻辑过期异步刷新</div>
+        <div class="opt" data-opt><span class="opt-key">C</span>直接加大数据库连接池，硬扛并发请求</div>
+        <div class="opt" data-opt><span class="opt-key">D</span>关闭缓存，所有请求直接读数据库</div>
+      </div>
+      <div class="explain" data-explain>
+        <div class="ex-card" style="margin-top:14px">
+          <h4 style="color:var(--purple-dark)">Boss 解析</h4>
+          <p>A 会制造雪崩；C、D 把压力全甩给数据库。正解 B：互斥锁保证只有一个请求重建缓存，逻辑过期让旧值继续可用、异步刷新，组合拳才是生产级方案。</p>
+        </div>
+      </div>
+      <div style="flex:1"></div>
+      <button class="btn btn-purple" data-submit style="margin-bottom:6px">挑战 Boss</button>
+    </div>
+  </div></div>
+</div>
+
+<!-- ========== 屏 5 · 今日任务卡 ========== -->
+<div class="cell">
+  <div class="cap">05 · 今日任务卡</div>
+  <div class="cap-sub">可勾选 · 游戏化任务感</div>
+  <div class="dv"><div class="scr">
+    <div class="st"><span>9:41</span><span class="st-ic">
+      <svg width="17" height="11" viewBox="0 0 17 11" fill="#3C3C3C"><rect x="0" y="7" width="3" height="4" rx="1"/><rect x="4.5" y="5" width="3" height="6" rx="1"/><rect x="9" y="2.5" width="3" height="8.5" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1"/></svg>
+      <svg width="25" height="12" viewBox="0 0 25 12" fill="none"><rect x="0.5" y="0.5" width="21" height="11" rx="3.5" stroke="#3C3C3C"/><rect x="2.5" y="2.5" width="15" height="7" rx="2" fill="#3C3C3C"/><path d="M23.5 4v4a2 2 0 0 0 0-4z" fill="#3C3C3C"/></svg>
+    </span></div>
+    <div class="bd">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin:4px 0 12px">
+        <h2 style="font-size:20px;font-weight:800">今日任务</h2>
+        <div class="streak" style="display:flex;align-items:center;gap:5px;background:#fff;border:2px solid var(--orange);color:var(--orange-dark);border-radius:999px;padding:5px 11px;font-size:12px;font-weight:800">
+          <svg class="flame-ic" width="13" height="15" viewBox="0 0 16 18" fill="#FF9600"><path d="M8 0C6.5 3 3 5.5 3 10a5 5 0 0 0 10 0c0-2-1-3.5-2-4.5C11 7 10 8 9.5 8.5 10 6 9.5 2.5 8 0z"/></svg>
+          6 天
+        </div>
+      </div>
+      <div class="card" style="background:var(--blue-tint);border-color:var(--blue);margin-bottom:14px">
+        <b style="font-size:15px;color:var(--blue-dark)">学习：Redis 缓存</b>
+        <p style="font-size:12px;color:var(--blue-dark);font-weight:600;margin-top:2px">预计 10 分钟 · 完成全部任务 +30 经验</p>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+        <div class="h-bar" style="flex:1"><i data-anim style="width:50%"></i></div>
+        <span style="font-size:13px;font-weight:800;color:var(--green-dark)">2 / 4</span>
+      </div>
+      <div data-tasks>
+        <div class="task done"><span class="ck"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 12.5 10 18 19.5 6.5"/></svg></span><b>学习基础概念</b><small>+5 XP</small></div>
+        <div class="task done"><span class="ck"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 12.5 10 18 19.5 6.5"/></svg></span><b>完成 5 题闯关</b><small>+10 XP</small></div>
+        <div class="task"><span class="ck"></span><b>完成 Boss 挑战</b><small>+15 XP</small></div>
+        <div class="task"><span class="ck"></span><b>复习错题 2 道</b><small>+5 XP</small></div>
+      </div>
+      <div class="card" style="margin-top:14px;text-align:center;background:var(--yellow-tint);border-color:var(--yellow)">
+        <p style="font-size:12.5px;color:#8a6d00;font-weight:700">全部完成可点亮今日徽章「闯关达人」</p>
+      </div>
+      <div style="flex:1"></div>
+      <button class="btn btn-green" style="margin-bottom:6px">继续任务</button>
+    </div>
+    <div class="tb">
+      <a class="on"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3 3 10.5V21h6v-6h6v6h6V10.5L12 3z"/></svg>首页</a>
+      <a><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>学习记录</a>
+      <a><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 5-5.5 8-5.5s6.5 1.5 8 5.5"/></svg>我的</a>
+    </div>
+  </div></div>
+</div>
+
+<!-- ========== 屏 6 · AI 学习模式 ========== -->
+<div class="cell">
+  <div class="cap">06 · AI 学习模式</div>
+  <div class="cap-sub">目标驱动出题策略 · 单选</div>
+  <div class="dv"><div class="scr">
+    <div class="st"><span>9:41</span><span class="st-ic">
+      <svg width="17" height="11" viewBox="0 0 17 11" fill="#3C3C3C"><rect x="0" y="7" width="3" height="4" rx="1"/><rect x="4.5" y="5" width="3" height="6" rx="1"/><rect x="9" y="2.5" width="3" height="8.5" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1"/></svg>
+      <svg width="25" height="12" viewBox="0 0 25 12" fill="none"><rect x="0.5" y="0.5" width="21" height="11" rx="3.5" stroke="#3C3C3C"/><rect x="2.5" y="2.5" width="15" height="7" rx="2" fill="#3C3C3C"/><path d="M23.5 4v4a2 2 0 0 0 0-4z" fill="#3C3C3C"/></svg>
+    </span></div>
+    <div class="bd">
+      <h2 style="font-size:20px;font-weight:800;margin:4px 0 4px">选择学习目标</h2>
+      <p style="font-size:12px;color:var(--gray);font-weight:600;margin-bottom:12px">AI 会根据目标调整出题策略与难度分布</p>
+      <div data-modes>
+        <div class="mode on"><span class="m-ic" style="background:var(--green-tint)"><svg width="20" height="20" viewBox="0 0 24 24" fill="#46A302"><path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.4 1 2.3h6c0-.9.4-1.8 1-2.3A7 7 0 0 0 12 2zM9 19h6v1a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2v-1z"/></svg></span><span style="flex:1"><b>理解</b><small>深入原理，重「为什么」的场景与对比题</small></span></div>
+        <div class="mode"><span class="m-ic" style="background:var(--blue-tint)"><svg width="20" height="20" viewBox="0 0 24 24" fill="#1899D6"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z"/></svg></span><span style="flex:1"><b>记忆</b><small>高频回顾，重定义与概念辨识</small></span></div>
+        <div class="mode"><span class="m-ic" style="background:var(--yellow-tint)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#CC9A00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></span><span style="flex:1"><b>考试</b><small>考点导向，模拟真题难度与陷阱</small></span></div>
+        <div class="mode"><span class="m-ic" style="background:var(--purple-tint)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#A568CC" stroke-width="2" stroke-linecap="round"><rect x="3" y="8" width="18" height="12" rx="2.5"/><path d="M9 8V6a3 3 0 0 1 3-3 3 3 0 0 1 3 3v2M3 13h18"/></svg></span><span style="flex:1"><b>面试</b><small>问答训练，覆盖高频面试追问</small></span></div>
+        <div class="mode"><span class="m-ic" style="background:var(--orange-tint)"><svg width="20" height="20" viewBox="0 0 24 24" fill="#E08600"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8z"/></svg></span><span style="flex:1"><b>速记</b><small>快速过一遍，10 分钟建立知识框架</small></span></div>
+      </div>
+      <div class="card" style="margin-top:14px;border-color:var(--green);background:var(--green-soft)">
+        <p style="font-size:12.5px;color:var(--green-dark);font-weight:700;line-height:1.6">「理解」模式：场景题占比提升至 40%，解析更强调原理与对比。</p>
+      </div>
+      <div style="flex:1"></div>
+      <button class="btn btn-green" style="margin-bottom:6px">按此模式出题</button>
+    </div>
+  </div></div>
+</div>
+
+<!-- ========== 屏 7 · AI 面试官 ========== -->
+<div class="cell">
+  <div class="cap">07 · AI 面试官</div>
+  <div class="cap-sub">模拟面试对话 + 多维评分</div>
+  <div class="dv"><div class="scr">
+    <div class="st"><span>9:41</span><span class="st-ic">
+      <svg width="17" height="11" viewBox="0 0 17 11" fill="#3C3C3C"><rect x="0" y="7" width="3" height="4" rx="1"/><rect x="4.5" y="5" width="3" height="6" rx="1"/><rect x="9" y="2.5" width="3" height="8.5" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1"/></svg>
+      <svg width="25" height="12" viewBox="0 0 25 12" fill="none"><rect x="0.5" y="0.5" width="21" height="11" rx="3.5" stroke="#3C3C3C"/><rect x="2.5" y="2.5" width="15" height="7" rx="2" fill="#3C3C3C"/><path d="M23.5 4v4a2 2 0 0 0 0-4z" fill="#3C3C3C"/></svg>
+    </span></div>
+    <div class="bd">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin:4px 0 10px">
+        <h2 style="font-size:20px;font-weight:800">AI 模拟面试</h2>
+        <span class="tag tag-purple">Spring Boot</span>
+      </div>
+      <div class="chat">
+        <div class="msg ai"><span class="who">AI 面试官</span>现在开始模拟面试。什么是 Spring Boot 自动配置？</div>
+        <div class="msg me">它是根据 classpath 中的依赖自动装配 Bean 的机制，核心是 @EnableAutoConfiguration…</div>
+        <div class="msg ai"><span class="who">AI 面试官</span>不错。追问：为什么 Spring Boot 能做到「约定大于配置」？</div>
+        <div class="msg me">因为它提供了合理的默认配置，只有默认不满足时才需要显式覆盖…</div>
+      </div>
+      <div class="card" style="padding:8px 14px;margin-top:8px">
+        <div class="iv-bar"><b>知识准确度</b><div class="h-bar"><i data-anim style="width:82%"></i></div><span style="color:var(--green-dark)">82%</span></div>
+        <div class="iv-bar"><b>表达能力</b><div class="h-bar"><i data-anim style="width:76%"></i></div><span style="color:var(--green-dark)">76%</span></div>
+        <div class="iv-bar"><b>理解深度</b><div class="h-bar"><i data-anim style="width:71%;background:var(--yellow)"></i></div><span style="color:var(--yellow-dark)">71%</span></div>
+      </div>
+      <div class="input-pill">
+        <span>用语音或文字回答…</span>
+        <span class="mic"><svg width="16" height="16" viewBox="0 0 24 24" fill="#fff"><path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 1 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-2.08A7 7 0 0 0 19 12h-2z"/></svg></span>
+      </div>
+    </div>
+  </div></div>
+</div>
+
+</main>
+
+<footer style="text-align:center;padding:0 28px 40px;color:var(--faint);font-size:12px;font-weight:600">
+  AI 闯关学习助手 · 网页原型 ② 第二阶段扩展 · 差异化能力：错题追问 / 知识图谱 / 间隔复习 / Boss 挑战 / 任务卡 / 学习模式 / AI 面试官
+</footer>
+
+<script>
+(function(){
+  var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ---- 进度条入场动画 ---- */
+  document.querySelectorAll('[data-anim]').forEach(function(bar){
+    var w = bar.style.width;
+    if(reduced){ return; }
+    bar.style.width = '0';
+    requestAnimationFrame(function(){ requestAnimationFrame(function(){ bar.style.width = w; }); });
+  });
+
+  /* ---- Tab 栏切换 ---- */
+  document.querySelectorAll('.tb').forEach(function(tb){
+    tb.addEventListener('click', function(e){
+      var a = e.target.closest('a');
+      if(!a) return;
+      tb.querySelectorAll('a').forEach(function(x){ x.classList.remove('on'); });
+      a.classList.add('on');
+    });
+  });
+
+  /* ---- 答题：选项选中 + 提交揭示 ---- */
+  document.querySelectorAll('[data-quiz]').forEach(function(root){
+    var box = root.querySelector('[data-options]');
+    var submit = root.querySelector('[data-submit]');
+    var explain = root.querySelector('[data-explain]');
+    var answered = false;
+    box.addEventListener('click', function(e){
+      var opt = e.target.closest('[data-opt]');
+      if(!opt || answered) return;
+      box.querySelectorAll('[data-opt]').forEach(function(o){ o.classList.remove('selected'); });
+      opt.classList.add('selected');
+    });
+    submit.addEventListener('click', function(){
+      if(answered) return;
+      var sel = box.querySelector('.selected');
+      if(!sel){ submit.textContent = '请先选择一个选项'; setTimeout(function(){ submit.textContent = '提交答案'; }, 1200); return; }
+      answered = true;
+      box.querySelectorAll('[data-opt]').forEach(function(o){
+        o.classList.add('lock'); o.classList.remove('selected');
+        if(o.dataset.correct){ o.classList.add('correct'); }
+      });
+      if(!sel.dataset.correct){ sel.classList.add('wrong'); }
+      if(explain){ explain.classList.add('show'); }
+      submit.textContent = answered && submit.textContent === '挑战 Boss' ? '查看解析' : '继续';
+    });
+  });
+
+  /* ---- 知识图谱：行点击高亮 ---- */
+  var tree = document.querySelector('[data-tree]');
+  if(tree){
+    tree.addEventListener('click', function(e){
+      var row = e.target.closest('.tr');
+      if(!row) return;
+      tree.querySelectorAll('.tr').forEach(function(r){ r.classList.remove('hl'); });
+      row.classList.add('hl');
+    });
+  }
+
+  /* ---- 任务卡勾选 ---- */
+  var tasks = document.querySelector('[data-tasks]');
+  if(tasks){
+    var checkSvg = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 12.5 10 18 19.5 6.5"/></svg>';
+    tasks.addEventListener('click', function(e){
+      var t = e.target.closest('.task');
+      if(!t) return;
+      t.classList.toggle('done');
+      t.querySelector('.ck').innerHTML = t.classList.contains('done') ? checkSvg : '';
+    });
+  }
+
+  /* ---- 学习模式单选 ---- */
+  var modes = document.querySelector('[data-modes]');
+  if(modes){
+    modes.addEventListener('click', function(e){
+      var m = e.target.closest('.mode');
+      if(!m) return;
+      modes.querySelectorAll('.mode').forEach(function(x){ x.classList.remove('on'); });
+      m.classList.add('on');
+    });
+  }
+})();
+</script>
+</body>
+</html>

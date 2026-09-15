@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI 闯关学习助手 · 原型总览 V2</title>
+<style>
+*,*::before,*::after{box-sizing:border-box}
+:root{
+  --ink-900:#101A2E; --ink-700:#2C3A52; --ink-500:#5A6A85; --ink-400:#8A97AC; --ink-300:#C3CBD9;
+  --line:#E6EAF1; --paper:#FFFFFF; --bg:#F4F6F9; --bg-deep:#EDF1F6;
+  --brand:#2B4EFF; --brand-press:#1E3AD1; --brand-soft:#EAEFFF;
+  --mint:#00D3A7; --mint-soft:#E3FAF4; --amber:#FFB300; --amber-soft:#FFF5E0;
+  --coral:#FF5C5C; --coral-soft:#FFEDED; --gold:#FFD84D; --flame:#FF7A45; --tang:#FF8A3D;
+  --boss-bg:#141B33;
+  --r-sm:10px; --r-md:14px; --r-lg:20px; --r-full:999px;
+  --sh-card:0 1px 2px rgba(16,26,46,.04),0 6px 16px rgba(16,26,46,.05);
+  --font:"PingFang SC","HarmonyOS Sans SC","Source Han Sans SC","Noto Sans CJK SC","Microsoft YaHei",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"SF Mono","JetBrains Mono",Consolas,monospace;
+}
+body{margin:0;font-family:var(--font);font-size:15px;line-height:1.6;color:var(--ink-900);background:#E4E9F0;font-variant-numeric:tabular-nums}
+h1,h2,h3,p,ul,ol{margin:0;padding:0}
+ul,ol{list-style:none}
+a{color:var(--brand);text-decoration:none}
+a:hover{text-decoration:underline}
+.wrap{max-width:1080px;margin:0 auto;padding:56px 32px 96px}
+.hero h1{font-size:34px;line-height:1.25;font-weight:800}
+.hero p{margin-top:12px;font-size:15px;color:var(--ink-500);max-width:720px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px}
+.chip{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 12px;border-radius:var(--r-full);font-size:12.5px;font-weight:600;background:var(--paper);border:1px solid var(--line);color:var(--ink-500)}
+.chip.br{background:var(--brand);border-color:var(--brand);color:#fff}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;margin-top:40px}
+@media(max-width:860px){.grid{grid-template-columns:1fr}.wrap{padding:32px 16px 72px}}
+.filecard{background:var(--paper);border:1px solid var(--line);border-radius:var(--r-md);padding:22px;box-shadow:var(--sh-card);display:flex;flex-direction:column;gap:14px}
+.filecard h2{font-size:19px;font-weight:700}
+.filecard .path{font-family:var(--mono);font-size:12px;color:var(--ink-400)}
+.filecard p{font-size:13.5px;color:var(--ink-500)}
+.go{display:inline-flex;align-items:center;gap:8px;height:44px;padding:0 20px;border-radius:var(--r-lg);background:var(--brand);color:#fff;font-weight:700;font-size:15px;box-shadow:0 3px 0 var(--brand-press);align-self:flex-start}
+.go:active{transform:translateY(3px);box-shadow:none}
+.scr-list{display:flex;flex-wrap:wrap;gap:6px}
+.scr-list a{font-size:12px;font-weight:600;color:var(--ink-500);background:var(--bg-deep);border-radius:var(--r-full);padding:4px 10px}
+.scr-list a:hover{background:var(--brand-soft);color:var(--brand);text-decoration:none}
+.tokens{margin-top:40px;background:var(--paper);border:1px solid var(--line);border-radius:var(--r-md);padding:22px;box-shadow:var(--sh-card)}
+.tokens h2{font-size:19px;font-weight:700}
+.tokens table{width:100%;border-collapse:collapse;margin-top:14px;font-size:13px}
+.tokens th{text-align:left;font-size:12px;color:var(--ink-400);font-weight:600;padding:8px 10px;border-bottom:1px solid var(--line)}
+.tokens td{padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+.tokens td code{font-family:var(--mono);font-size:12px}
+.sw{display:inline-block;width:14px;height:14px;border-radius:4px;vertical-align:-2px;margin-right:6px;border:1px solid rgba(16,26,46,.08)}
+.note{margin-top:40px;background:var(--boss-bg);color:#DCE4F7;border-radius:var(--r-md);padding:22px}
+.note h2{font-size:19px;font-weight:700;color:#fff}
+.note p{font-size:13.5px;margin-top:10px;line-height:1.75}
+.note code{font-family:var(--mono);font-size:12.5px;color:var(--gold)}
+.note ul{margin-top:12px;display:grid;gap:8px;font-size:13.5px}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <header class="hero">
+    <h1>AI 闯关学习助手<br>高保真原型总览 V2</h1>
+    <p>把用户想学的任何内容，变成一场会根据表现不断变化的 AI 闯关。V2 在 V1 的业务流程、功能与布局完全不变的前提下，给六个业务模块各配了一个识别色（顶部色晕、导航发丝线、分组标题胶囊），并加入原创吉祥物「闯闯」的九个姿态与一个 Boss 守卫，让每个模块一眼可辨、每屏都有温度。</p>
+    <div class="chips">
+      <span class="chip br">靛青蓝 #2B4EFF</span>
+      <span class="chip">清爽骨架 + 闯关高光</span>
+      <span class="chip">375 × 812 机身</span>
+      <span class="chip">一行三列响应式</span>
+      <span class="chip">六色模块识别</span>
+      <span class="chip">吉祥物 闯闯 × 9 姿态</span>
+      <span class="chip">零外部依赖</span>
+      <span class="chip">2026-09-15 V2</span>
+    </div>
+  </header>
+
+  <div class="grid">
+    <section class="filecard">
+      <span class="path">prototype1/style-guide.html</span>
+      <h2>设计规范与风格样张</h2>
+      <p>色彩、字体、圆角、阴影、组件四态的完整令牌规范，加首页、闯关、答错反馈、通关报告四个关键屏。色板由页面实时读取 CSS 变量渲染，规范与代码不会脱节。</p>
+      <div class="scr-list"><a href="style-guide.html">令牌规范</a><a href="style-guide.html">首页</a><a href="style-guide.html">闯关单选</a><a href="style-guide.html">答错反馈</a><a href="style-guide.html">通关报告</a></div>
+      <a class="go" href="style-guide.html">打开规范页</a>
+    </section>
+    <section class="filecard">
+      <span class="path">prototype1/core-loop.html</span>
+      <h2>01 MVP 核心闭环 · 15 屏</h2>
+      <p>输入、生成、答题、反馈、报告、记录、异常的完整闭环，对应方案设计文档的五个环节与异常总表。</p>
+      <div class="scr-list">
+        <a href="core-loop.html#g1">01 首页</a><a href="core-loop.html#g1">02 学习配置</a><a href="core-loop.html#g1">03 上传资料</a>
+        <a href="core-loop.html#g2">04 生成等待</a><a href="core-loop.html#g2">05 知识点预览</a>
+        <a href="core-loop.html#g3">06 单选</a><a href="core-loop.html#g3">07 判断</a><a href="core-loop.html#g3">08 场景</a><a href="core-loop.html#g3">09 答对反馈</a><a href="core-loop.html#g3">10 答错反馈</a>
+        <a href="core-loop.html#g4">11 通关报告</a><a href="core-loop.html#g4">12 学习记录</a><a href="core-loop.html#g4">13 个人中心</a>
+        <a href="core-loop.html#g5">14 出题失败</a><a href="core-loop.html#g5">15 空状态</a>
+      </div>
+      <a class="go" href="core-loop.html">打开核心闭环</a>
+    </section>
+    <section class="filecard">
+      <span class="path">prototype1/advanced-loop.html</span>
+      <h2>02 进阶学习闭环 · 10 屏</h2>
+      <p>P0 差异化能力：错题追问、动态难度、薄弱点诊断、知识掌握图、间隔复习、任务卡、学习模式与 Boss 关。</p>
+      <div class="scr-list">
+        <a href="advanced-loop.html#g1">01 错题追问</a><a href="advanced-loop.html#g1">02 动态难度</a><a href="advanced-loop.html#g1">03 薄弱点诊断</a>
+        <a href="advanced-loop.html#g2">04 知识掌握图</a><a href="advanced-loop.html#g2">05 间隔复习</a><a href="advanced-loop.html#g2">06 任务卡</a>
+        <a href="advanced-loop.html#g3">07 学习模式</a><a href="advanced-loop.html#g3">08 Boss 入口</a><a href="advanced-loop.html#g3">09 Boss 答题</a><a href="advanced-loop.html#g3">10 Boss 结算</a>
+      </div>
+      <a class="go" href="advanced-loop.html">打开进阶闭环</a>
+    </section>
+    <section class="filecard">
+      <span class="path">prototype/ 与 prototype1/</span>
+      <h2>历史版本对照</h2>
+      <p>V0 是 prototype 目录的 Duolingo 主绿 #58CC02 游戏卡通风；V1 是 prototype1 目录的靛青蓝单色克制版。两版都完整保留，与本页 V2 共享同一套信息架构与文案，只换视觉语言，方便并排比较。</p>
+      <div class="scr-list"><a href="../prototype/mvp-core.html">V0 核心 9 屏</a><a href="../prototype/phase2-features.html">V0 扩展 7 屏</a><a href="../prototype1/index.html">V1 总览</a><a href="../prototype1/style-guide.html">V1 规范</a></div>
+    </section>
+  </div>
+
+  <section class="tokens">
+    <h2>令牌速查</h2>
+    <table>
+      <thead><tr><th style="width:180px">角色</th><th style="width:150px">令牌</th><th>用在哪里</th></tr></thead>
+      <tbody>
+        <tr><td><span class="sw" style="background:#2B4EFF"></span>主色</td><td><code>--brand #2B4EFF</code></td><td>主按钮、当前进度、选中态。一屏只出现在下一步该点的地方。</td></tr>
+        <tr><td><span class="sw" style="background:#00D3A7"></span>掌握较好 / 答对</td><td><code>--mint #00D3A7</code></td><td>报告、知识掌握图、学习记录三处必须同色。</td></tr>
+        <tr><td><span class="sw" style="background:#FFB300"></span>一般 / 警示</td><td><code>--amber #FFB300</code></td><td>掌握度中档、待复习、AI 判断卡。</td></tr>
+        <tr><td><span class="sw" style="background:#FF5C5C"></span>薄弱 / 答错</td><td><code>--coral #FF5C5C</code></td><td>错题、薄弱节点、答错反馈。</td></tr>
+        <tr><td><span class="sw" style="background:#FF8A3D"></span>挑战难度</td><td><code>--tang #FF8A3D</code></td><td>难度 4 到 5 的标签与错因条。</td></tr>
+        <tr><td><span class="sw" style="background:#FFD84D"></span>奖励</td><td><code>--gold #FFD84D</code></td><td>徽章、经验、荧光笔高亮。</td></tr>
+        <tr><td><span class="sw" style="background:#141B33"></span>Boss 舞台</td><td><code>--boss-bg #141B33</code></td><td>只给 Boss 关与结算页，不做全局深色。</td></tr>
+        <tr><td><span class="sw" style="background:#101A2E"></span>主文字</td><td><code>--ink-900 #101A2E</code></td><td>标题、题干、正文。次级 #5A6A85，辅助 #8A97AC。</td></tr>
+        <tr><td><span class="sw" style="background:#2B4EFF"></span>模块 · 内容输入</td><td><code>--m-in #2B4EFF</code></td><td>首页、学习配置、上传资料的色晕与发丝线。</td></tr>
+        <tr><td><span class="sw" style="background:#7C3AED"></span>模块 · AI 生成与追问</td><td><code>--m-ai #7C3AED</code></td><td>生成等待、知识点预览、错题追问、诊断、学习模式。</td></tr>
+        <tr><td><span class="sw" style="background:#FF8A3D"></span>模块 · 闯关答题</td><td><code>--m-quiz #FF8A3D</code></td><td>三种题型与答对答错反馈，橙色带出闯关的能量感。</td></tr>
+        <tr><td><span class="sw" style="background:#0EA5E9"></span>模块 · 报告与记录</td><td><code>--m-data #0EA5E9</code></td><td>通关报告、学习记录、知识掌握图、间隔复习、任务卡。</td></tr>
+        <tr><td><span class="sw" style="background:#FF5C5C"></span>模块 · 异常与空状态</td><td><code>--m-err #FF5C5C</code></td><td>出题失败与空状态，与错误语义同族但不混用。</td></tr>
+        <tr><td><span class="sw" style="background:#FFD84D"></span>模块 · Boss 舞台</td><td><code>--m-boss #FFD84D</code></td><td>Boss 入口、答题、结算，金色配深navy 舞台。</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="note">
+    <h2>怎么打开与验收</h2>
+    <p>四个文件都是自包含的，直接双击即可。需要本地服务时用：</p>
+    <p><code>python -m http.server 8931 --directory prototype1</code> 然后访问 <code>http://127.0.0.1:8931/index.html</code></p>
+    <ul>
+      <li>每个文件顶部工具条可以隐藏图注、把网格缩放到 75%，方便一屏看更多。</li>
+      <li>宽度 1280 以上一行三列，900 到 1279 两列，更窄一列。</li>
+      <li>屏内可滚动，选项可点选，分段控件可切换，任务卡可勾选，生成等待页阶段会自动轮转。</li>
+      <li>已适配 prefers-reduced-motion，动画在系统开启减弱动效时静止。</li>
+      <li>V2 新增：模块识别色只染外壳（色晕、发丝线、分组胶囊、徽标），掌握度三档与对错语义色保持不变。</li>
+      <li>V2 新增：吉祥物「闯闯」一屏最多一只，Boss 关换成守卫形象，结算页换回戴学士帽的闯闯。</li>
+    </ul>
+  </section>
+</main>
+</body>
+</html>

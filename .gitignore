@@ -1,0 +1,25 @@
+# CodeBuddy 本地工具数据
+.codebuddy/
+
+# 系统文件
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# 编辑器
+.vscode/
+.idea/
+
+# Python（后续后端用）
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Node（后续前端用）
+node_modules/
+dist/
+
+# 环境变量与密钥
+.env
+.env.*
