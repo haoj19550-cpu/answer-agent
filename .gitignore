@@ -23,3 +23,11 @@ dist/
 # 环境变量与密钥
 .env
 .env.*
+!.env.example
+
+# 运行日志与 Taro 构建缓存
+*.log
+client/.temp/
+client/.swc/
+.pytest_cache/
+.coverage

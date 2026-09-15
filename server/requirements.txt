@@ -1,0 +1,19 @@
+# 版本锁定依据：方案设计文档 3.7（2026-09 官方源调研）
+fastapi==0.141.1
+uvicorn[standard]==0.53.0
+pydantic==2.13.5
+pydantic-settings==2.15.0
+langchain-core==1.6.3
+langchain-deepseek==1.1.0
+langchain-openai==1.6.2
+openai==3.13.0
+structlog==26.1.0
+httpx
+pdfplumber
+pypdf
+python-multipart
+cachetools
+# 开发依赖
+pytest==9.1.1
+pytest-asyncio
+reportlab  # 测试用：构造文本型 PDF fixture

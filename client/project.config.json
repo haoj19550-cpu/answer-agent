@@ -1,0 +1,13 @@
+{
+  "miniprogramRoot": "dist/",
+  "projectname": "answer-agent-client",
+  "description": "AI 交互式知识闯关学习平台",
+  "appid": "touristappid",
+  "setting": {
+    "es6": true,
+    "enhance": false,
+    "postcss": false,
+    "minified": false
+  },
+  "compileType": "miniprogram"
+}

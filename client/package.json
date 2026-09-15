@@ -1,0 +1,41 @@
+{
+  "name": "answer-agent-client",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AI 交互式知识闯关学习平台 · 小程序前端（Taro 4 + React 18）",
+  "scripts": {
+    "dev:weapp": "taro build --type weapp --watch",
+    "dev:h5": "taro build --type h5 --watch",
+    "build:weapp": "taro build --type weapp",
+    "build:h5": "taro build --type h5"
+  },
+  "dependencies": {
+    "@tarojs/components": "4.2.1",
+    "@tarojs/helper": "4.2.1",
+    "@tarojs/plugin-framework-react": "4.2.1",
+    "@tarojs/plugin-platform-h5": "4.2.1",
+    "@tarojs/plugin-platform-weapp": "4.2.1",
+    "@tarojs/react": "4.2.1",
+    "@tarojs/runtime": "4.2.1",
+    "@tarojs/shared": "4.2.1",
+    "@tarojs/taro": "4.2.1",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "zustand": "5.0.15"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.26.0",
+    "@babel/preset-react": "^8.0.1",
+    "@babel/preset-typescript": "^8.0.1",
+    "@pmmmwh/react-refresh-webpack-plugin": "^0.6.3",
+    "@tarojs/cli": "4.2.1",
+    "@tarojs/webpack5-runner": "4.2.1",
+    "@types/react": "^18.3.12",
+    "babel-preset-taro": "4.2.1",
+    "postcss": "^8.4.49",
+    "react-refresh": "^0.19.0",
+    "sass": "^1.83.0",
+    "typescript": "~5.9.0",
+    "webpack": "5.91.0"
+  }
+}
