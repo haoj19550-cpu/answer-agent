@@ -31,3 +31,6 @@ client/.temp/
 client/.swc/
 .pytest_cache/
 .coverage
+
+# 原型导出图（体积大，不入版本库）
+prototype2/export/
