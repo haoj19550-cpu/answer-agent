@@ -8,11 +8,12 @@ export default defineConfig<'webpack5'>(async (merge) => {
   const baseConfig: UserConfigExport<'webpack5'> = {
     projectName: 'answer-agent-client',
     date: '2026-09-15',
-    designWidth: 750,
+    // prototype2 为 375px 设计稿：1px → 2rpx（小程序）/ 1:1（H5），与内联样式口径一致
+    designWidth: 375,
     deviceRatio: {
+      375: 2,
       640: 2.34 / 2,
       750: 1,
-      375: 2,
       828: 1.81 / 2,
     },
     sourceRoot: 'src',
