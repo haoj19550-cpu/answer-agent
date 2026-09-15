@@ -18,7 +18,11 @@ venv/
 
 # Node（后续前端用）
 node_modules/
+# 编译产物：小程序 dist/、H5 dist-h5/
 dist/
+client/dist-h5/
+# 微信开发者工具本地私有配置（本机启动选项，不入库）
+client/project.private.config.json
 
 # 环境变量与密钥
 .env
