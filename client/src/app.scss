@@ -1,7 +1,7 @@
 /* ============ 设计令牌（prototype2 :root 全量移植） ============ */
-/* 小程序端 page 为根元素；H5 端需挂 :root 才能生效 */
-page,
-:root {
+/* 小程序端挂 page 与 .pg 根容器（WXSS 不支持 :root，组选择器含非法项会整条丢弃）；
+   H5 端挂 :root / body。三处内容一致，由 mixin 保证同步。 */
+@mixin design-tokens {
   --ink-900: #101A2E; --ink-700: #2C3A52; --ink-500: #5A6A85; --ink-400: #8A97AC; --ink-300: #C3CBD9;
   --line: #E6EAF1; --paper: #FFFFFF; --bg: #F4F6F9; --bg-deep: #EDF1F6;
   --brand: #2B4EFF; --brand-press: #1E3AD1; --brand-soft: #EAEFFF;
@@ -20,7 +20,9 @@ page,
   --r-xs: 6px; --r-sm: 10px; --r-md: 14px; --r-lg: 20px; --r-full: 999px;
   --sh-card: 0 1px 2px rgba(16,26,46,.04), 0 6px 16px rgba(16,26,46,.05);
   --sh-boss: 0 8px 24px rgba(20,27,51,.28);
+}
 
+@mixin base-typography {
   background: var(--bg);
   color: var(--ink-900);
   font-family: "PingFang SC","HarmonyOS Sans SC","Source Han Sans SC","Noto Sans CJK SC","Microsoft YaHei",system-ui,sans-serif;
@@ -29,14 +31,22 @@ page,
   font-variant-numeric: tabular-nums;
 }
 
-/* H5 端根元素背景与字体 */
+page {
+  @include design-tokens;
+  @include base-typography;
+}
+
+.pg {
+  @include design-tokens;
+}
+
+/* H5 端根元素 */
+:root {
+  @include design-tokens;
+}
+
 body {
-  background: var(--bg);
-  color: var(--ink-900);
-  font-family: "PingFang SC","HarmonyOS Sans SC","Source Han Sans SC","Noto Sans CJK SC","Microsoft YaHei",system-ui,sans-serif;
-  font-size: 15px;
-  line-height: 1.55;
-  font-variant-numeric: tabular-nums;
+  @include base-typography;
 }
 
 view, text, button, input, textarea, scroll-view { box-sizing: border-box; }
