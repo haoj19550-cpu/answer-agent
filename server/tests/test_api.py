@@ -84,7 +84,11 @@ def run_generate(client, material_id: str) -> dict:
 
 class TestHealthAndMaterials:
     def test_health(self, client):
-        assert client.get("/health").json() == {"status": "ok"}
+        body = client.get("/health").json()
+        assert body["status"] == "ok"
+        assert body["llm_mode"] in ("fake", "real")
+        assert body["model"]
+        assert body["fallback"] is False
 
     def test_create_material(self, client):
         resp = client.post(

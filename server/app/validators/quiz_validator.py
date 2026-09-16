@@ -10,15 +10,28 @@
 
 import re
 
+import structlog
+
 from app.schemas.quiz import KnowledgeExtraction, QuestionType, QuizSet
+
+logger = structlog.get_logger(__name__)
+
+# 归一化：去空白、标点与省略号（真实模型摘录常带「」引号、…… 与换行）
+_PUNCT_RE = re.compile(
+    r"[\s　，。、；：？！“”‘’（）《》〈〉「」『』【】…,.;:?!\"'()\[\]<>\-]+"
+)
 
 
 def _normalize(s: str) -> str:
-    """归一化：去空白与标点，用于模糊匹配。"""
-    return re.sub(r"[\s　，。、；：？！“”‘’（）《》〈〉,.;:?!\"'()\[\]<>-]+", "", s)
+    """归一化：去空白与标点（含省略号），用于模糊匹配。"""
+    return _PUNCT_RE.sub("", s)
 
 
-def _fuzzy_contains(haystack: str, needle: str, fragment: int = 12) -> bool:
+# 省略号：真实模型摘录常用「……」跳过中间文字，按片段分别校验
+_ELLIPSIS_RE = re.compile(r"…+|\.{2,}|·{2,}")
+
+
+def _match_one(haystack: str, needle: str, fragment: int = 12) -> bool:
     """needle 归一化后整体或首尾片段在 haystack 归一化文本中出现。"""
     h, n = _normalize(haystack), _normalize(needle)
     if not n:
@@ -30,13 +43,26 @@ def _fuzzy_contains(haystack: str, needle: str, fragment: int = 12) -> bool:
     return n[:fragment] in h or n[-fragment:] in h
 
 
+def _fuzzy_contains(haystack: str, needle: str, fragment: int = 12) -> bool:
+    """模糊包含；含省略号时拆成多段，要求每段都能在原文中找到。"""
+    parts = [p for p in _ELLIPSIS_RE.split(needle) if p.strip()]
+    if not parts:
+        return False
+    return all(_match_one(haystack, p, fragment) for p in parts)
+
+
 def validate_quiz(
     quiz: QuizSet,
     extraction: KnowledgeExtraction,
     material: str,
     expected_mix: tuple[int, int, int] | None = None,
+    grounded_strict: bool = True,
 ) -> list[str]:
-    """返回错误列表；空列表表示校验通过。"""
+    """返回错误列表；空列表表示校验通过。
+
+    grounded_strict=False 时，source_excerpt 未命中原文只记录告警（不判失败），
+    用于真实模型摘录风格偏改写时的降级运行。
+    """
     errors: list[str] = []
     questions = quiz.questions
 
@@ -100,7 +126,11 @@ def validate_quiz(
         if not any(_fuzzy_contains(name, q.knowledge_point) or _fuzzy_contains(q.knowledge_point, name) for name in kp_names):
             errors.append(f"{prefix}：knowledge_point「{q.knowledge_point}」未命中已提取知识点")
         if not _fuzzy_contains(material, q.source_excerpt):
-            errors.append(f"{prefix}：source_excerpt 未在材料原文中匹配到（幻觉风险）")
+            msg = f"{prefix}：source_excerpt 未在材料原文中匹配到（幻觉风险）"
+            if grounded_strict:
+                errors.append(msg)
+            else:
+                logger.warning("grounded_excerpt_miss", question=prefix, excerpt=q.source_excerpt)
 
     # 4. 难度分布（弱一致信号）
     if len(questions) >= 5:

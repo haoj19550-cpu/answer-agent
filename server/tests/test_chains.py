@@ -3,6 +3,7 @@
 import pytest
 
 from app.chains.quiz import (
+    EmptyStructuredOutput,
     build_extraction_chain,
     build_quiz_chain,
     build_report_chain,
@@ -72,6 +73,31 @@ class TestRetry:
         with pytest.raises(ValueError):
             await chain.ainvoke({"material": "m"})
         assert llm.call_count == 3
+
+
+class TestEmptyStructuredOutput:
+    """DeepSeek 偶发空 tool call：必须转成异常，才能被重试/回退兜住。"""
+
+    async def test_empty_output_retried_then_success(self, fake_llm_factory, sample_extraction):
+        llm = fake_llm_factory([None, sample_extraction])
+        chain = build_extraction_chain(llm, max_attempts=2)
+        result = await chain.ainvoke({"material": "m"})
+        assert isinstance(result, KnowledgeExtraction)
+        assert llm.call_count == 2
+
+    async def test_empty_output_exhausted_raises(self, fake_llm_factory):
+        llm = fake_llm_factory([None])
+        chain = build_extraction_chain(llm, max_attempts=2)
+        with pytest.raises(EmptyStructuredOutput):
+            await chain.ainvoke({"material": "m"})
+
+    async def test_empty_output_falls_back_to_secondary(self, fake_llm_factory, sample_extraction):
+        primary = fake_llm_factory([None])
+        fallback = fake_llm_factory([sample_extraction])
+        chain = build_extraction_chain(primary, fallback_llm=fallback, max_attempts=1)
+        result = await chain.ainvoke({"material": "m"})
+        assert isinstance(result, KnowledgeExtraction)
+        assert fallback.call_count == 1
 
 
 class TestFallback:

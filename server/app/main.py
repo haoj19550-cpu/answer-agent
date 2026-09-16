@@ -13,11 +13,16 @@ from app.api import gamification, materials, quiz, reports
 from app.api.deps import ChainRegistry
 from app.chains.quiz import build_extraction_chain, build_quiz_chain, build_report_chain
 from app.config import Settings, get_settings
-from app.llm.models import get_fallback_llm, get_primary_llm
+from app.llm.models import LLMConfigurationError, get_fallback_llm, get_primary_llm
 from app.schemas.api import ApiError, ErrorResponse
 from app.stores import memory_store
 
 logger = structlog.get_logger(__name__)
+
+
+def llm_mode(settings: Settings) -> str:
+    """当前模型装配模式：fake（内置样例）/ real（DeepSeek）。"""
+    return "fake" if settings.fake_llm else "real"
 
 
 def build_chain_registry(settings: Settings) -> ChainRegistry:
@@ -30,6 +35,11 @@ def build_chain_registry(settings: Settings) -> ChainRegistry:
             extraction_chain=extraction_chain,
             quiz_chain=quiz_chain,
             report_chain=report_chain,
+        )
+    if not settings.deepseek_api_key:
+        raise LLMConfigurationError(
+            "未配置 DEEPSEEK_API_KEY：请在 server/.env 中填入 DeepSeek API Key，"
+            "或设置 FAKE_LLM=1 使用内置样例模式"
         )
     primary = get_primary_llm(settings)
     fallback = get_fallback_llm(settings)
@@ -79,8 +89,11 @@ def create_app(settings: Settings | None = None, chains: ChainRegistry | None = 
         app.state.chains = chains or build_chain_registry(settings)
         logger.info(
             "app_started",
+            llm_mode=llm_mode(settings),
             model=settings.deepseek_model,
+            base_url=settings.deepseek_base_url,
             fallback=bool(settings.fallback_api_key),
+            grounded_strict=settings.grounded_strict,
         )
         yield
 
@@ -116,7 +129,16 @@ def create_app(settings: Settings | None = None, chains: ChainRegistry | None = 
 
     @app.get("/health")
     async def health() -> dict:
-        return {"status": "ok"}
+        """健康检查 + 模型装配可观测（mode/model/fallback/开关）。"""
+        return {
+            "status": "ok",
+            "llm_mode": llm_mode(settings),
+            "model": settings.deepseek_model,
+            "base_url": settings.deepseek_base_url,
+            "fallback": bool(settings.fallback_api_key),
+            "grounded_strict": settings.grounded_strict,
+            "fake_llm": settings.fake_llm,
+        }
 
     return app
 

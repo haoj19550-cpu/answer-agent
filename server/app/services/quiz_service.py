@@ -22,7 +22,23 @@ from app.validators.quiz_validator import validate_quiz
 logger = structlog.get_logger(__name__)
 
 # 校验失败后的服务层重试次数（每个降级档位）
-VALIDATE_RETRY_PER_STEP = 2
+# 真实模型单次调用成本远高于样例模式，默认每档只跑 1 次，失败直接进下一档
+VALIDATE_RETRY_PER_STEP = 1
+
+
+def worst_case_llm_calls(
+    count: int,
+    chain_max_attempts: int,
+    has_fallback: bool,
+    retry_per_step: int = VALIDATE_RETRY_PER_STEP,
+) -> int:
+    """单局出题的 LLM 调用次数上界（成本护栏）。
+
+    = 降级档位数 × 每档重试次数 × 链级重试次数 × （装配回退时主/备各一次）
+    """
+    steps = len(reduction_ladder(count))
+    per_chain = chain_max_attempts * (2 if has_fallback else 1)
+    return steps * retry_per_step * per_chain
 
 
 class QuizGenerationFailed(Exception):
@@ -81,15 +97,18 @@ async def generate_quiz(
     config: QuizConfig,
     quiz_chain: Runnable,
     session_id: str = "",
+    grounded_strict: bool = True,
+    retry_per_step: int = VALIDATE_RETRY_PER_STEP,
 ) -> QuizSet:
     """校验-重试-减量流水线。
 
     链内 with_retry 处理结构化解析失败；此处循环处理 Validator 业务校验失败；
     逐级减量；链上 with_fallbacks 已自动跨模型回退。
+    grounded_strict=False 时摘录未命中原文只告警不判失败。
     """
     last_errors: list[str] = []
     for count, single, judge, scenario in reduction_ladder(config.count):
-        for attempt in range(VALIDATE_RETRY_PER_STEP):
+        for attempt in range(retry_per_step):
             usage_cb = UsageMetadataCallbackHandler()
             try:
                 quiz: QuizSet = await quiz_chain.ainvoke(
@@ -111,7 +130,13 @@ async def generate_quiz(
             finally:
                 record_usage(session_id, usage_cb)
 
-            errors = validate_quiz(quiz, extraction, material_text, (count, single, judge, scenario))
+            errors = validate_quiz(
+                quiz,
+                extraction,
+                material_text,
+                (count, single, judge, scenario),
+                grounded_strict=grounded_strict,
+            )
             if not errors:
                 logger.info("quiz_generated", count=count, attempt=attempt)
                 return quiz

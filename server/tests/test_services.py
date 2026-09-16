@@ -13,6 +13,7 @@ from app.services.quiz_service import (
     extract_knowledge,
     filter_knowledge_points,
     generate_quiz,
+    worst_case_llm_calls,
 )
 from app.services.report_service import build_report, compute_stats
 from app.stores import memory_store
@@ -73,9 +74,48 @@ class TestGeneratePipeline:
         )
         llm = fake_llm_factory([bad, sample_quiz_set])
         chain = build_quiz_chain(llm, max_attempts=1)
-        quiz = await generate_quiz(sample_material, sample_extraction, QuizConfig(), chain)
+        # 真实模式默认每档 1 次；此处显式放开为档内 2 次以验证「档内重试即成功」
+        quiz = await generate_quiz(
+            sample_material, sample_extraction, QuizConfig(), chain, retry_per_step=2
+        )
         assert len(quiz.questions) == 5
         assert llm.call_count == 2
+
+    async def test_default_one_attempt_per_step_goes_down_ladder(
+        self, fake_llm_factory, sample_extraction, sample_material, sample_quiz_set
+    ):
+        bad = sample_quiz_set.model_copy(
+            update={
+                "questions": [
+                    q.model_copy(update={"source_excerpt": "不存在的幻觉内容xyz"})
+                    for q in sample_quiz_set.questions
+                ]
+            }
+        )
+        llm = fake_llm_factory([bad])
+        chain = build_quiz_chain(llm, max_attempts=1)
+        with pytest.raises(QuizGenerationFailed):
+            await generate_quiz(sample_material, sample_extraction, QuizConfig(), chain)
+        assert llm.call_count == 2  # 仅走完降级梯子（5题档 + 3题档），档内不空转
+
+    async def test_grounded_strict_off_tolerates_hallucinated_excerpt(
+        self, fake_llm_factory, sample_extraction, sample_material, sample_quiz_set
+    ):
+        loose = sample_quiz_set.model_copy(
+            update={
+                "questions": [
+                    q.model_copy(update={"source_excerpt": "模型自己归纳的一句话"})
+                    for q in sample_quiz_set.questions
+                ]
+            }
+        )
+        llm = fake_llm_factory([loose])
+        chain = build_quiz_chain(llm, max_attempts=1)
+        quiz = await generate_quiz(
+            sample_material, sample_extraction, QuizConfig(), chain, grounded_strict=False
+        )
+        assert len(quiz.questions) == 5
+        assert llm.call_count == 1
 
     async def test_all_fail_raises(self, fake_llm_factory, sample_extraction, sample_material, sample_quiz_set):
         bad = sample_quiz_set.model_copy(
@@ -98,6 +138,42 @@ class TestGeneratePipeline:
         chain = build_quiz_chain(llm, max_attempts=1)
         with pytest.raises(QuizGenerationFailed):
             await generate_quiz(sample_material, sample_extraction, QuizConfig(), chain)
+
+
+# ---------- 真实模式成本上界 ----------
+
+
+class TestRetryBudget:
+    def test_worst_case_without_fallback(self):
+        # 5 题：2 档 × 每档 1 次 × 链级 2 次 = 4
+        assert worst_case_llm_calls(5, chain_max_attempts=2, has_fallback=False) == 4
+
+    def test_worst_case_with_fallback(self):
+        # 主模型每次失败都会切通义，上界翻倍
+        assert worst_case_llm_calls(5, chain_max_attempts=2, has_fallback=True) == 8
+
+    def test_worst_case_for_ten_questions(self):
+        # 10 题梯子 4 档
+        assert worst_case_llm_calls(10, chain_max_attempts=2, has_fallback=False) == 8
+
+    def test_retry_per_step_multiplies(self):
+        assert (
+            worst_case_llm_calls(5, chain_max_attempts=2, has_fallback=False, retry_per_step=2)
+            == 8
+        )
+
+    def test_budget_matches_default_settings(self):
+        # 默认配置下（含回退）单局出题上界不超过 8 次调用
+        from app.config import Settings
+
+        s = Settings(deepseek_api_key="k")
+        calls = worst_case_llm_calls(
+            5,
+            chain_max_attempts=s.chain_max_attempts,
+            has_fallback=bool(s.fallback_api_key),
+            retry_per_step=s.validate_retry_per_step,
+        )
+        assert calls <= 8
 
 
 # ---------- 报告服务 ----------

@@ -7,14 +7,22 @@ class Settings(BaseSettings):
     """应用配置（pydantic-settings，环境变量 / .env）。"""
 
     deepseek_api_key: str = ""
-    deepseek_model: str = "deepseek-chat"  # 主用模型，非推理模式
+    # DeepSeek 官方 2026-04-24 公告：deepseek-chat / deepseek-reasoner 两个旧名
+    # 已于 2026-07-24 停用，现役模型为 deepseek-v4-flash / deepseek-v4-pro
+    deepseek_model: str = "deepseek-v4-flash"
+    deepseek_base_url: str = "https://api.deepseek.com/v1"
+    # 结构化输出禁用思考模式：thinking 过程与强制 Schema 冲突（方案 3.4 注）
+    deepseek_disable_thinking: bool = True
     fallback_api_key: str = ""  # 通义（百炼兼容端点）
     fallback_model: str = "qwen-plus"
     fallback_base_url: str = "https://dashscope.aliyuncs.com/compatible-mode/v1"
 
-    llm_timeout: int = 30
+    llm_timeout: int = 60
     llm_max_retries: int = 2  # 网络层指数退避重试（429/5xx）
-    chain_max_attempts: int = 3  # 业务层链级重试
+    chain_max_attempts: int = 2  # 业务层链级重试
+    validate_retry_per_step: int = 1  # 每个降级档位内的校验重试次数
+    # Grounded Quiz：source_excerpt 未匹配原文时 1=判失败（触发降级），0=仅告警
+    grounded_strict: bool = True
 
     # 材料约束
     material_max_chars: int = 20000

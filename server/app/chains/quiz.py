@@ -9,7 +9,7 @@ from pathlib import Path
 
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.runnables import Runnable
+from langchain_core.runnables import Runnable, RunnableLambda
 
 from app.schemas.quiz import KnowledgeExtraction, QuizSet, ReportContent
 
@@ -21,6 +21,21 @@ def load_prompt(name: str) -> str:
     return (_PROMPTS_DIR / name).read_text(encoding="utf-8")
 
 
+class EmptyStructuredOutput(ValueError):
+    """模型未返回结构化内容。
+
+    DeepSeek 偶发 finish_reason=tool_calls 但 tool_calls 为空，
+    with_structured_output 会静默返回 None；这里转成异常，
+    让链级 with_retry / with_fallbacks 能够生效（否则脏数据会流入业务层）。
+    """
+
+
+def _require_structured(value):
+    if value is None:
+        raise EmptyStructuredOutput("模型未返回结构化输出（空 tool call）")
+    return value
+
+
 def _assemble(
     prompt: ChatPromptTemplate,
     schema: type,
@@ -28,11 +43,14 @@ def _assemble(
     fallback_llm: BaseChatModel | None,
     max_attempts: int,
 ) -> Runnable:
-    chain = prompt | llm.with_structured_output(schema, method="json_schema")
+    def _structured(model: BaseChatModel) -> Runnable:
+        # DeepSeek 集成内部把 json_schema 映射为 function_calling
+        return prompt | model.with_structured_output(schema, method="json_schema") | guard
+
+    guard = RunnableLambda(_require_structured)
+    chain = _structured(llm)
     if fallback_llm is not None:
-        chain = chain.with_fallbacks(
-            [prompt | fallback_llm.with_structured_output(schema, method="json_schema")]
-        )
+        chain = chain.with_fallbacks([_structured(fallback_llm)])
     return chain.with_retry(stop_after_attempt=max_attempts)
 
 

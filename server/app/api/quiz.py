@@ -121,7 +121,13 @@ async def generate_quiz_sse(
         quiz_id = f"quiz_{uuid4().hex[:12]}"
         try:
             quiz_set = await generate_quiz(
-                material_text, extraction, config, chains.quiz_chain, session_id=quiz_id
+                material_text,
+                extraction,
+                config,
+                chains.quiz_chain,
+                session_id=quiz_id,
+                grounded_strict=settings.grounded_strict,
+                retry_per_step=settings.validate_retry_per_step,
             )
         except QuizGenerationFailed:
             yield _error("QUIZ_GENERATION_FAILED", "题目生成失败，建议精简内容后重试（本次不扣额度）")
