@@ -39,3 +39,13 @@ client/.swc/
 
 # 原型导出图（体积大，不入版本库）
 prototype2/export/
+
+# 本地文档与原型（不对外）
+prototype/
+prototype1/
+prototype2/
+方案设计文档.md
+AI 交互式知识闯关学习平台——需求分析文档.md
+AI交互式知识闯关学习平台——需求分析文档(v0,1).md
+deep-research-report.md
+项目启动指南.md
